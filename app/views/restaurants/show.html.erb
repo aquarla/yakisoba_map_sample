@@ -1,0 +1,103 @@
+<% 
+  keywords = default_meta_tags[:keywords] << @restaurant.name
+  keywords << @restaurant.prefecture.name if @restaurant.prefecture.present?
+  keywords << @restaurant.yakisoba_type.name if @restaurant.yakisoba_type.present?
+  set_meta_tags title: [title, @restaurant.name],
+                 keywords: keywords,
+                 description: "#{@restaurant.name}のやきそば情報を紹介します。" + default_meta_tags[:description],
+                 og: default_meta_tags[:og].merge(:description => "#{@restaurant.name}のやきそば情報を紹介します。" + default_meta_tags[:og][:description])
+%>
+<div class="row">
+  <div class="large-6 columns restaurant-detail">
+    <h3><%= @restaurant.name %></h3>
+    <table>
+      <tr>
+        <th><%= Restaurant.human_attribute_name(:name) %></th>
+        <td><%= @restaurant.name %></td>
+      </tr>
+      <tr>
+        <th><%= Restaurant.human_attribute_name(:address_combined) %></th>
+        <td><%= @restaurant.address_combined %></td>
+      </tr>
+      <% if @restaurant.phone.present? %>
+        <tr>
+          <th><%= Restaurant.human_attribute_name(:phone) %></th>
+          <td><%= @restaurant.phone || '-' %></td>
+        </tr>
+      <% end %>
+      <% if @restaurant.open_and_close.present? %>
+        <tr>
+          <th><%= Restaurant.human_attribute_name(:open_and_close) %></th>
+          <td><%= nl2br(@restaurant.open_and_close) %></td>
+        </tr>
+      <% end %>
+      <% if @restaurant.regular_holiday.present? %>
+        <tr>
+          <th><%= Restaurant.human_attribute_name(:regular_holiday) %></th>
+          <td><%= nl2br(@restaurant.regular_holiday) %></td>
+        </tr>
+      <% end %>
+      <% if @restaurant.seats.present? %>
+        <tr>
+          <th><%= Restaurant.human_attribute_name(:seats) %></th>
+          <td><%= nl2br(@restaurant.seats) %></td>
+        </tr>
+      <% end %>
+      <% if @restaurant.access.present? %>
+        <tr>
+          <th><%= Restaurant.human_attribute_name(:access) %></th>
+          <td><%= nl2br(@restaurant.access) %></td>
+        </tr>
+      <% end %>
+      <% if @restaurant.urls.present? %>
+        <tr>
+          <th><%= Restaurant.human_attribute_name(:url) %></th>
+          <td><%= @restaurant.urls.collect{|u|
+                  name = (u.url_type ? u.url_type.name : u.title) || u.url
+                  link_to(name, u.url, {:target => "blank"})
+                }.join("</br>").html_safe
+           %></td>
+        </tr>
+      <% end %>
+    </table>
+  </div>
+  <div class="large-6 columns hide-for-small-only">
+    <div style='width:100%;padding:5px;'>
+      <div id="map" style='width:100%;height:500px;'></div>
+    </div>
+  </div>
+  <div class="large-6 columns show-for-small-only">
+    <%= google_static_map_image_tag(@restaurant) %>
+  </div>
+</div>
+<div class="row">
+  <div class="large-12 columns show-for-small-only">
+  <%= link_to "地図をアプリで開く", "http://maps.apple.com/?q=#{@restaurant.latitude},#{@restaurant.longitude}", :class => "button map-button" %>
+  </div>
+</div>
+
+</div>
+<div class="row">
+  <div class="large-12 columns">
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <!-- 詳細画面下部レスポンシブ -->
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-8686579472251964"
+         data-ad-slot="8255180190"
+         data-ad-format="auto"></ins>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+  </div>
+</div>
+<script type="text/javascript">
+    handler = Gmaps.build('Google');
+    handler.buildMap({ provider: {}, internal: {id: 'map'}}, function(){
+      markers = handler.addMarkers(<%=raw @hash.to_json %>);
+      handler.bounds.extendWith(markers);
+      handler.fitMapToBounds();
+      handler.getMap().setZoom(16);
+    });
+</script>
+

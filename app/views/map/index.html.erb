@@ -1,0 +1,100 @@
+<% 
+  if @prefecture 
+    set_meta_tags title: [title, "#{@prefecture.name}の店舗一覧"],
+                 keywords: default_meta_tags[:keywords] << @prefecture.name,
+                 description: "#{@prefecture.name}のやきそば情報を紹介します。" + default_meta_tags[:description],
+                 og: default_meta_tags[:og].merge(:description => "#{@prefecture.name}のやきそば情報を紹介します。" + default_meta_tags[:og][:description])
+  end
+%>
+<div class="row">
+  <div class="medium-8 small-12 columns hide-for-small-only">
+    <% if @prefecture %>
+      <h4><%= @prefecture.name %>のやきそば店舗一覧</h4>
+    <% end %>
+    <div style='width:100%;padding:10px;'>
+      <div id="map" style='width:100%;height:420px;'></div>
+    </div>
+    <h5>都道府県で絞り込み</h5>
+    <%= area_link_tags(@prefectures) %>
+  </div>
+  <div class="medium-4 small-0 columns">
+    <div class="ad">
+      <% if Rails.env.production? %>
+      <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <!-- トップ画面右下部 -->
+        <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-8686579472251964"
+           data-ad-slot="3848660192"
+           data-ad-format="auto"></ins>
+      <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+      <% end %>
+    </div>
+    <div class="restaurant-list">
+      <% @restaurants.each do |restaurant| %>
+      <div class="restaurant-item">
+        <%= link_to restaurant_path(restaurant) do %>
+        <div class="restaurant-name"><%= restaurant.name %></div>
+        <div class="restaurant-address"><%= restaurant.address_combined %></div>
+        <div class="restaurant-phone"><%= restaurant.phone %></div>
+        <% end %>
+      </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+    handler = Gmaps.build('Google');
+    handler.buildMap({ provider: {}, internal: {id: 'map', detect_location: true}}, function(){
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position){
+          var marker = handler.addMarker({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            picture: {
+              url: "<%= asset_path "green.png" %>",
+              width:  36,
+              height: 36
+            }
+          });
+          handler.map.centerOn(marker);
+        });
+      }
+      markers = handler.addMarkers(<%=raw @hash.to_json %>);
+
+      /*
+       * 都道府県別ページ以外は、前回の中心座標・ズームを
+       * Cookieから読み込んで使用する
+       */
+      force_center = <%= @prefecture ? "true" : "false" %>; 
+      if (Cookies.get("lat") == null || Cookies.get("lng") == null || Cookies.get("zoom") == null || force_center == true) {
+        handler.bounds.extendWith(markers);
+        handler.fitMapToBounds();
+
+        center = handler.getMap().getCenter();
+        Cookies.set("lat", center.lat());
+        Cookies.set("lng", center.lng());
+        Cookies.set("zoom", handler.getMap().getZoom());
+      } else {
+        handler.getMap().setCenter(new google.maps.LatLng(Cookies.get("lat"), Cookies.get("lng")));
+        handler.getMap().setZoom(parseInt(Cookies.get("zoom")));
+      }
+
+      /*
+       * 中心座標とズームを変更時に、その値をCookieに保存
+       */
+      google.maps.event.addListener(handler.getMap(), 'center_changed', 
+        function() {
+          center = handler.getMap().getCenter();
+          Cookies.set("lat", center.lat());
+          Cookies.set("lng", center.lng());
+        });
+      google.maps.event.addListener(handler.getMap(), 'zoom_changed',
+        function() {
+          Cookies.set("zoom", handler.getMap().getZoom());
+        });
+    });
+</script>

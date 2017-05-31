@@ -1,0 +1,16 @@
+<%=
+  content_tag(:div) do
+    concat(content_tag(:p, :class => :name) do 
+      restaurant.name
+    end)
+    concat(content_tag(:p, :class => :address) do
+      restaurant.address_combined
+    end)
+    concat(content_tag(:p, :class => :phone) do
+      restaurant.phone
+    end)
+    concat(content_tag(:p, :class => :detail) do
+      link_to "詳細", restaurant_path(restaurant)
+    end)
+  end
+%>
